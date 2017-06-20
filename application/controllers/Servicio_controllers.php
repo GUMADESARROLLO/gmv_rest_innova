@@ -30,7 +30,7 @@ class Servicio_controllers extends CI_Controller {
 	public function Clientes()
 	{
 		$this->servicios_model->Clientes($_POST['mVendedor']);
-		//$this->servicios_model->Clientes("F07");
+		//$this->servicios_model->Clientes("f03");
 	}
 	public function Historial()
 	{
@@ -46,7 +46,9 @@ class Servicio_controllers extends CI_Controller {
 	}
 	public function InsertCobros()
 	{
+		//$cobros = '[{"mCliente":"00998","mFecha":"2017-06-20 18:04:47","mIdCobro":"F09-C200617201","mImporte":"15000","mObservacion":"COBRO EXCESIVO","mRuta":"F09","mTipo":"EFECTIVO"},{"mCliente":"03408","mFecha":"2017-06-20 18:05:04","mIdCobro":"F09-C200617202","mImporte":"160","mObservacion":"EKISDE","mRuta":"F09","mTipo":"EFECTIVO"}]';
 		$this->servicios_model->InsertCobros($_POST['pCobros']);
+		//$this->servicios_model->InsertCobros($cobros);
 	}
 	public function InsertVisitas()
 	{
@@ -61,10 +63,10 @@ class Servicio_controllers extends CI_Controller {
 		$this->servicios_model->LoginUsuario($_POST['usuario'],$_POST['pass']);
 	}
 	public function insertPedidos()
-	{
-		//$pedidos = '[{"detalles":{"nameValuePairs":{"ID0":"F09P29051731","ARTICULO0":"10118041","DESC0":"Bleomicina Sulfato 15 UI PPSI 5ml/Vial 1/Caja Refrigerado (Naprod)","CANT0":"12.0","TOTAL0":"483","BONI0":"0"}},"mCliente":"00998","mComentario":"pedido desde tablet de maryan","mEstado":"0","mFecha":"2017-05-29 07:43:59","mIdPedido":"F09P29051731","mNombre":"FARMACIA MARIA BELEN","mPrecio":"5796.0","mVendedor":"F09"}]';
+	{		
+		//$PEDIDOS = '[{"detalles":{"nameValuePairs":{"ID0":"F09P20061731","ARTICULO0":"10311092","DESC0":"Zanate (Deltametrina) 0.219 mg Loción 30 ml/Frasco 1/Caja (Ramos)","CANT0":"2.0","TOTAL0":"21","BONI0":"0","ID1":"F09P20061731","ARTICULO1":"10520042","DESC1":"Sales de Rehidratación Oral 28.1g/Sobre Polvo para 1 Litro Sabor Manzana 20/Caja (Intermed)","CANT1":"123.0","TOTAL1":"120","BONI1":"100+40"}},"mCliente":"00991","mComentario":"","mEstado":"0","mFecha":"2017-06-20 18:04:27","mIdPedido":"F09P20061731","mNombre":"FARMACIA INMACULADA ruc 0922610600001W","mPrecio":"14802.0","mVendedor":"F09"}]';
 		$this->servicios_model->insertPedidos($_POST['PEDIDOS']);
-		//$this->servicios_model->insertPedidos($pedidos);
+		//$this->servicios_model->insertPedidos($PEDIDOS);
 	}
 	public function updatePedidos()
 	{
@@ -73,5 +75,14 @@ class Servicio_controllers extends CI_Controller {
 	public function insertRazones()
 	{
 		$this->servicios_model->insertRazones($_POST['RAZONES']);
+	}
+	public function lotes()
+	{
+		$this->servicios_model->lotes();
+	}
+	public function CONSECUTIVO()
+	{
+		$this->servicios_model->CONSECUTIVO($_POST['usuario']);
+		//$this->servicios_model->CONSECUTIVO("F09");
 	}
 }

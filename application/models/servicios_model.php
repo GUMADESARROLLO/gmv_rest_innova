@@ -250,7 +250,11 @@ class servicios_model extends CI_Model
         echo json_encode($rtnAgenda);
     }
   public function InsertCobros($json){
+    $cobros = '';
+    $jsonCobro = array();
+    $i = 0;
         foreach(json_decode($json, true) as $key){
+            $cobros .= "'".$key['mIdCobro']."',";
             $Cobros = array(
                 'IDCOBRO'     => $key['mIdCobro'],
                 'CLIENTE'     => $key['mCliente'],
@@ -261,7 +265,17 @@ class servicios_model extends CI_Model
                 'FECHA'       => $key['mFecha']);
            $query = $this->db->insert('cobros', $Cobros);
         }
-        echo json_encode($query);
+        $query22 = $this->db->query("SELECT IDCOBRO FROM cobros WHERE IDCOBRO IN (".substr($cobros, 0,-1).")");
+        if ($query22->num_rows()>0)
+        {
+            $cobros = '';
+            foreach ($query22->result_array() as $key)
+            {
+                $cobros .= "'".$key['IDCOBRO']."',";
+            }
+            $jsonCobro['results'][$i]['mIdCobro'] = substr($cobros, 0,-1);
+        }
+        echo json_encode($jsonCobro);
     }
     public function InsertVisitas($json){
         foreach(json_decode($json, true) as $key){
@@ -305,40 +319,33 @@ class servicios_model extends CI_Model
     }
 
     public function insertPedidos($Data){
-
-        /*$pedido = 'F07P22051731';
-
-        $rest = substr($pedido, 1,2);
-        echo "F".$rest;*/
-
         $i = 0;
-        $rtnUsuario = array();
+        $rtnPedidos = array();
         $cadena = "";
 
         foreach(json_decode($Data, true) as $key){
-            /*$rest = substr($key['mIdPedido'], 1,2);
-            $MIVENDEDOR = "F".$rest;*/
-            //$responsable = $this->db->query("SELECT ResponsableUsuario FROM view_grupoasignacion WHERE Ruta = '".$MIVENDEDOR."'");
+            $resp = "NINGUNO";
             $responsable = $this->db->query("SELECT ResponsableUsuario FROM view_grupoasignacion WHERE Ruta = '".$key['mVendedor']."'");
-
+            if ($responsable->num_rows()>0) {
+                $resp = $responsable->result_array()[0]['ResponsableUsuario'];
+            }
 
             $query = $this->db->query("SELECT IDPEDIDO FROM pedido WHERE IDPEDIDO = '".$key['mIdPedido']."'");
-            $cadena = "'".$key['mIdPedido']."',";
+            
+            $cadena .= "'".$key['mIdPedido']."',";
+
             if ($query->num_rows() == 0){
+                $this->db->query("UPDATE llaves SET pedido = pedido+1 WHERE RUTA ='".$key['mVendedor']."'");
 
-                     /*$insert = $this->db->query('CALL SP_pedidos ("'.$key['mIdPedido'].'","'.$MIVENDEDOR.'","'.$key['mCliente'].'",
-                                            "'.$key['mNombre'].'","'.$key['mFecha'].'","'.$key['mPrecio'].'","'.$key['mEstado'].'",
-                                            "'.$responsable->result_array()[0]['ResponsableUsuario'].'","'.$key['mComentario'].'")');*/
+                $insert = $this->db->query('CALL SP_pedidos ("'.$key['mIdPedido'].'","'.$key['mVendedor'].'","'.$key['mCliente'].'",
+                                            "'.str_replace("'", "", $key['mNombre']).'","'.$key['mFecha'].'","'.$key['mPrecio'].'","'.$key['mEstado'].'",
+                                            "'.$resp.'","'.$key['mComentario'].'")');
 
-                    $insert = $this->db->query('CALL SP_pedidos ("'.$key['mIdPedido'].'","'.$key['mVendedor'].'","'.$key['mCliente'].'",
-                                            "'.$key['mNombre'].'","'.$key['mFecha'].'","'.$key['mPrecio'].'","'.$key['mEstado'].'",
-                                            "'.$responsable->result_array()[0]['ResponsableUsuario'].'","'.$key['mComentario'].'")');
 
-                
                 for ($e=0; $e <(count($key['detalles']['nameValuePairs']))/6; $e++){
                     $datos = array('IDPEDIDO'   => $key['detalles']['nameValuePairs']['ID'.$i],
                                    'ARTICULO'   => $key['detalles']['nameValuePairs']['ARTICULO'.$i],
-                                   'DESCRIPCION'=> $key['detalles']['nameValuePairs']['DESC'.$i],
+                                   'DESCRIPCION'=> str_replace("'", "", $key['detalles']['nameValuePairs']['DESC'.$i]),
                                    'CANTIDAD'   => $key['detalles']['nameValuePairs']['CANT'.$i],
                                    'TOTAL'      => number_format(str_replace(",", "", $key['detalles']['nameValuePairs']['TOTAL'.$i]),2),
                                    'BONIFICADO' => $key['detalles']['nameValuePairs']['BONI'.$i]
@@ -352,15 +359,26 @@ class servicios_model extends CI_Model
                 }
             }
         }
-        $query = $this->db->query("SELECT IDPEDIDO FROM pedido WHERE IDPEDIDO IN (".substr($cadena, 0,-1).")");
-        if ($query->num_rows()>0) {
-            $rtnUsuario['results'][0]['mEstado'] = "PEDIDOS ENVIADOS...";
-        }else{
-            $rtnUsuario['results'][0]['mEstado'] = "ERROR, INTENTELO MAS TARDE";
-        }
-
+        $query22 = $this->db->query("SELECT IDPEDIDO,ESTADO,COMENTARIO,IFNULL(COMENTARIO_CONFIR,'') COMENTARIO_CONFIR FROM pedido WHERE IDPEDIDO IN (".substr($cadena, 0,-1).")");
         
-        echo json_encode($rtnUsuario);
+        if ($query22->num_rows()>0)
+        {
+            $i = 0;
+            foreach ($query22->result_array() as $key)
+            {
+                $rtnPedidos['results'][$i]['mIdPedido'] = $key['IDPEDIDO'];
+                $rtnPedidos['results'][$i]['mEstado'] = $key['ESTADO'];
+                $rtnPedidos['results'][$i]['mComentario'] = $key['COMENTARIO'];
+                $rtnPedidos['results'][$i]['mConfirmacion'] = $key['COMENTARIO_CONFIR'];
+                $i++;
+            }
+        }else{
+            $rtnPedidos['results'][$i]['mIdPedido'] = "";
+            $rtnPedidos['results'][$i]['mEstado'] = "";
+            $rtnPedidos['results'][$i]['mComentario'] = "";
+            $rtnPedidos['results'][$i]['mConfirmacion'] = "";
+        }
+        echo json_encode($rtnPedidos);
     }
 
     public function insertRazones($Post){
@@ -437,6 +455,40 @@ class servicios_model extends CI_Model
             }
         }
         echo json_encode($rtnActividad);
+    }
+    public function lotes(){
+        $i=0;
+        $rtnCliente=array();
+        $query = $this->sqlsrv->fetchArray("SELECT * FROM GMV_LOTES",SQLSRV_FETCH_ASSOC);
+        foreach($query as $key){
+            $rtnCliente['results'][$i]['mCodigo']          = $key['ARTICULO'];
+            $rtnCliente['results'][$i]['mLote']              = $key['LOTE'];
+            $rtnCliente['results'][$i]['mUnidad']          = number_format($key['CANT_DISPONIBLE'],2,'.','');
+            $rtnCliente['results'][$i]['mFecha']              = $key['FECHA_VENCIMIENTO'];
+            
+            $i++;
+        }
+        echo json_encode($rtnCliente);
+        $this->sqlsrv->close();
+    }
+    public function CONSECUTIVO($usuario)
+    {
+        $i=0;
+        $array = array();
+        $query = $this->db->query("SELECT * FROM llaves WHERE RUTA = '".$usuario."'");
+
+        if ($query->num_rows()>0)
+        {
+            foreach ($query->result_array() as $key)
+            {
+                $array['results'][$i]['mPedido'] = $key['PEDIDO'];
+                $array['results'][$i]['mCobro'] = $key['COBRO'];
+                $array['results'][$i]['mRazon'] = $key['RAZON'];
+                $i++;
+            }
+        }
+        echo json_encode($array);
+
     }
 }
 ?>
